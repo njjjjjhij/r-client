@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-label="R Client panel">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#151220"/><stop offset="0.55" stop-color="#0c0a12"/><stop offset="1" stop-color="#08060c"/></linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#171420"/><stop offset="1" stop-color="#0b0910"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b98bff"/><stop offset="1" stop-color="#7b3cf0"/></linearGradient>
+    <linearGradient id="curve" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#5a2fa8"/><stop offset="1" stop-color="#c9a4ff"/></linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <style>.u{font-family:Inter,'Segoe UI',system-ui,sans-serif}.name{fill:#efeaf8;font-size:13px}.dim{fill:#8f87a3;font-size:12px}.muted{fill:#5e586e;font-size:11px}.head{fill:#a99fbd;font-size:10px;letter-spacing:1.4px}.val{fill:#c9a4ff;font-size:11px}.bold{font-weight:700}</style>
+  </defs>
+  <rect width="1200" height="760" fill="url(#bg)"/>
+  <g opacity="0.35"><path d="M0 560 L180 470 L360 540 L540 430 L760 520 L980 450 L1200 540 L1200 760 L0 760Z" fill="#100d18"/><path d="M0 640 L220 580 L430 630 L650 560 L880 620 L1080 570 L1200 620 L1200 760 L0 760Z" fill="#0a0810"/></g>
+  <rect x="54" y="34" width="1092" height="692" rx="16" fill="url(#panel)" stroke="#2b2440"/>
+  <rect x="54" y="34" width="1092" height="52" rx="16" fill="#141020"/>
+  <rect x="54" y="70" width="1092" height="16" fill="#141020"/>
+  <line x1="54" y1="86" x2="1146" y2="86" stroke="#2b2440"/>
+  <rect x="72" y="47" width="26" height="26" rx="7" fill="url(#accent)"/>
+  <text class="u bold" x="80" y="65" font-size="15" fill="#140f1f">R</text>
+  <text class="u bold" x="110" y="66" font-size="16" fill="#f4f0fb" letter-spacing="1">R CLIENT</text>
+  <rect x="212" y="50" width="42" height="20" rx="10" fill="#3a2a5e"/>
+  <text class="u bold" x="221" y="64" font-size="9" fill="#c9a4ff" letter-spacing="1">BETA</text>
+  <text class="u muted" x="266" y="65" font-size="10">v1.0.0</text>
+  <rect x="880" y="50" width="128" height="20" rx="10" fill="#1c1728" stroke="#2b2440"/>
+  <text class="u dim" x="894" y="64" font-size="10">Lme/jbdsgn</text>
+  <circle cx="993" cy="60" r="3" fill="#58e28c"/>
+  <text class="u" x="1118" y="67" font-size="20" fill="#8f87a3">×</text>
+  <rect x="54" y="86" width="58" height="640" fill="#0a0810"/>
+  <rect x="66" y="100" width="34" height="30" rx="8" fill="#2a2040"/>
+  <text class="u bold" x="74" y="120" font-size="9" fill="#c9a4ff">AIM</text>
+  <g class="u bold" font-size="9" fill="#5e586e"><text x="71" y="158">CMB</text><text x="71" y="192">ESP</text><text x="71" y="226">VIS</text><text x="71" y="260">MOV</text><text x="71" y="294">WLD</text><text x="71" y="328">SKN</text><text x="71" y="362">UTL</text></g>
+  <rect x="112" y="86" width="1" height="640" fill="#221c33"/>
+  <rect x="128" y="100" width="512" height="30" rx="7" fill="#1a1626" stroke="#2b2440"/>
+  <text class="u muted" x="142" y="120" font-size="11">Search for modules...</text>
+  <text class="u head" x="132" y="152">Targeting</text>
+  <g>
+    <rect x="128" y="162" width="512" height="30" rx="6" fill="#171320"/><text class="u name" x="140" y="182">Silent Aim</text><rect x="592" y="172" width="30" height="12" rx="6" fill="#7b3cf0"/><circle cx="615" cy="178" r="4.5" fill="#efeaf8"/><text class="u muted" x="628" y="182">…</text>
+    <rect x="128" y="196" width="512" height="30" rx="6" fill="#171320"/><text class="u name" x="140" y="216">Auto Fire</text><rect x="592" y="206" width="30" height="12" rx="6" fill="#2c2540"/><circle cx="599" cy="212" r="4.5" fill="#8f87a3"/><text class="u muted" x="628" y="216">…</text>
+    <rect x="128" y="230" width="512" height="30" rx="6" fill="#171320"/><text class="u name" x="140" y="250">Auto Wall</text><rect x="592" y="240" width="30" height="12" rx="6" fill="#7b3cf0"/><circle cx="615" cy="246" r="4.5" fill="#efeaf8"/><text class="u muted" x="628" y="250">…</text>
+    <rect x="128" y="264" width="512" height="30" rx="6" fill="#171320"/><text class="u name" x="140" y="284">Automatic Scope</text><rect x="592" y="274" width="30" height="12" rx="6" fill="#7b3cf0"/><circle cx="615" cy="280" r="4.5" fill="#efeaf8"/><text class="u muted" x="628" y="284">…</text>
+  </g>
+  <text class="u head" x="132" y="318">Accuracy &amp; Exploits</text>
+  <g>
+    <rect x="128" y="328" width="512" height="30" rx="6" fill="#171320"/><text class="u name" x="140" y="348">Double Tap</text><rect x="592" y="338" width="30" height="12" rx="6" fill="#7b3cf0"/><circle cx="615" cy="344" r="4.5" fill="#efeaf8"/><text class="u muted" x="628" y="348">…</text>
+    <rect x="128" y="362" width="512" height="30" rx="6" fill="#171320"/><text class="u name" x="140" y="382">Hide Shots</text><rect x="592" y="372" width="30" height="12" rx="6" fill="#7b3cf0"/><circle cx="615" cy="378" r="4.5" fill="#efeaf8"/><text class="u muted" x="628" y="382">…</text>
+    <rect x="128" y="396" width="512" height="30" rx="6" fill="#171320"/><text class="u name" x="140" y="416">Quick Stop</text><rect x="592" y="406" width="30" height="12" rx="6" fill="#7b3cf0"/><circle cx="615" cy="412" r="4.5" fill="#efeaf8"/><text class="u muted" x="628" y="416">…</text>
+    <rect x="128" y="430" width="512" height="30" rx="6" fill="#171320"/><text class="u name" x="140" y="450">Multi-point Hitbox</text><rect x="592" y="440" width="30" height="12" rx="6" fill="#2c2540"/><circle cx="599" cy="446" r="4.5" fill="#8f87a3"/><text class="u muted" x="628" y="450">…</text>
+    <rect x="128" y="464" width="512" height="30" rx="6" fill="#171320"/><text class="u name" x="140" y="484">Damage Override</text><rect x="592" y="474" width="30" height="12" rx="6" fill="#7b3cf0"/><circle cx="615" cy="480" r="4.5" fill="#efeaf8"/><text class="u muted" x="628" y="484">…</text>
+    <rect x="128" y="498" width="512" height="30" rx="6" fill="#171320"/><text class="u name" x="140" y="518">Hit Chance Override</text><rect x="592" y="508" width="30" height="12" rx="6" fill="#2c2540"/><circle cx="599" cy="514" r="4.5" fill="#8f87a3"/><text class="u muted" x="628" y="518">…</text>
+  </g>
+  <text class="u head" x="132" y="552">Safety</text>
+  <g>
+    <rect x="128" y="562" width="512" height="30" rx="6" fill="#171320"/><text class="u name" x="140" y="582">Safe Points</text><rect x="592" y="572" width="30" height="12" rx="6" fill="#2c2540"/><circle cx="599" cy="578" r="4.5" fill="#8f87a3"/><text class="u muted" x="628" y="582">…</text>
+    <rect x="128" y="596" width="512" height="30" rx="6" fill="#171320"/><text class="u name" x="140" y="616">Dynamic Hitboxes</text><rect x="592" y="606" width="30" height="12" rx="6" fill="#7b3cf0"/><circle cx="615" cy="612" r="4.5" fill="#efeaf8"/><text class="u muted" x="628" y="616">…</text>
+    <rect x="128" y="630" width="512" height="30" rx="6" fill="#171320"/><text class="u name" x="140" y="650">Delay Shot</text><rect x="592" y="640" width="30" height="12" rx="6" fill="#2c2540"/><circle cx="599" cy="646" r="4.5" fill="#8f87a3"/><text class="u muted" x="628" y="650">…</text>
+  </g>
+  <rect x="656" y="96" width="474" height="614" rx="10" fill="#161222" stroke="#2b2440"/>
+  <text class="u bold" x="676" y="132" font-size="16" fill="#f4f0fb">Anti-Aim</text>
+  <text class="u muted" x="676" y="152" font-size="11">Moves your replicated yaw away from your real aim.</text>
+  <rect x="676" y="164" width="434" height="30" rx="7" fill="url(#accent)"/>
+  <text class="u bold" x="866" y="184" font-size="11" fill="#ffffff" letter-spacing="1">ENABLED</text>
+  <g>
+    <rect x="676" y="206" width="434" height="30" rx="6" fill="#1b1629"/><text class="u dim" x="688" y="226">Pitch Angle</text><rect x="1060" y="216" width="30" height="12" rx="6" fill="#7b3cf0"/><circle cx="1083" cy="222" r="4.5" fill="#efeaf8"/>
+    <rect x="676" y="240" width="434" height="30" rx="6" fill="#1b1629"/><text class="u dim" x="688" y="260">Yaw Base</text><rect x="1060" y="250" width="30" height="12" rx="6" fill="#7b3cf0"/><circle cx="1083" cy="256" r="4.5" fill="#efeaf8"/>
+    <rect x="676" y="274" width="434" height="44" rx="6" fill="#1b1629"/><text class="u dim" x="688" y="294">Desync Inverter</text><text class="u muted" x="688" y="309" font-size="10">Offsets horizontal body angle while airborne.</text><rect x="1060" y="284" width="30" height="12" rx="6" fill="#2c2540"/><circle cx="1067" cy="290" r="4.5" fill="#8f87a3"/>
+    <rect x="676" y="322" width="434" height="30" rx="6" fill="#1b1629"/><text class="u dim" x="688" y="342">Fake Lag</text><rect x="1060" y="332" width="30" height="12" rx="6" fill="#2c2540"/><circle cx="1067" cy="338" r="4.5" fill="#8f87a3"/>
+    <rect x="676" y="356" width="434" height="30" rx="6" fill="#1b1629"/><text class="u dim" x="688" y="376">Slow Walk</text><rect x="1060" y="366" width="30" height="12" rx="6" fill="#2c2540"/><circle cx="1067" cy="372" r="4.5" fill="#8f87a3"/>
+    <rect x="676" y="390" width="434" height="30" rx="6" fill="#1b1629"/><text class="u dim" x="688" y="410">Subtick Deflection</text><rect x="1060" y="400" width="30" height="12" rx="6" fill="#2c2540"/><circle cx="1067" cy="406" r="4.5" fill="#8f87a3"/>
+    <text class="u head" x="676" y="444">Angles &amp; Desync</text>
+    <rect x="676" y="454" width="434" height="30" rx="6" fill="#1b1629"/><text class="u dim" x="688" y="474">Roll Angle</text><rect x="1060" y="464" width="30" height="12" rx="6" fill="#2c2540"/><circle cx="1067" cy="470" r="4.5" fill="#8f87a3"/>
+    <rect x="676" y="488" width="434" height="30" rx="6" fill="#1b1629"/><text class="u dim" x="688" y="508">Edge Detection</text><rect x="1060" y="498" width="30" height="12" rx="6" fill="#7b3cf0"/><circle cx="1083" cy="504" r="4.5" fill="#efeaf8"/>
+    <rect x="676" y="522" width="434" height="30" rx="6" fill="#1b1629"/><text class="u dim" x="688" y="542">Transition Curve</text><text class="u val" x="1052" y="542">1.35</text>
+    <path d="M676 596 C740 596,790 588,830 566 S900 530,940 522 S1030 512,1110 508" fill="none" stroke="url(#curve)" stroke-width="2.5" filter="url(#glow)"/>
+    <circle cx="940" cy="522" r="4" fill="#c9a4ff"/>
+    <rect x="676" y="612" width="434" height="30" rx="6" fill="#1b1629"/><text class="u dim" x="688" y="632">Manual Direction</text><rect x="1046" y="621" width="64" height="14" rx="7" fill="#241c38"/><text class="u val" x="1058" y="631" font-size="9">Left</text>
+    <rect x="676" y="646" width="434" height="30" rx="6" fill="#1b1629"/><text class="u dim" x="688" y="666">Visual Indicator</text><rect x="1060" y="656" width="30" height="12" rx="6" fill="#2c2540"/><circle cx="1067" cy="662" r="4.5" fill="#8f87a3"/>
+  </g>
+  <rect x="26" y="662" width="64" height="64" rx="16" fill="#161222" stroke="#7b3cf0"/>
+  <text class="u bold" x="45" y="705" font-size="30" fill="#f4f0fb">R</text>
+  <circle cx="80" cy="674" r="4" fill="#c9a4ff"/>
+</svg>
