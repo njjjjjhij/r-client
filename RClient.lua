@@ -160,15 +160,16 @@ end
 --------------------------------------------------------------------------
 
 local function guiParent()
+	-- PlayerGui is the reliable parent for input; hidden containers can eat taps.
+	local playerGui = LP:FindFirstChildOfClass("PlayerGui")
+	if playerGui then
+		return playerGui
+	end
 	local ok, hidden = pcall(function()
 		return gethui()
 	end)
 	if ok and hidden then
 		return hidden
-	end
-	local core = game:GetService("CoreGui")
-	if core then
-		return core
 	end
 	return LP:WaitForChild("PlayerGui")
 end
@@ -3180,9 +3181,9 @@ end)
 --------------------------------------------------------------------------
 -- Panel
 --
--- Layout follows the reference: dark card, icon rail on the left, search and
--- module list in the middle, settings for the selected module on the right.
--- Everything is built from Frames so it works on Delta mobile with touch.
+-- Built from real TextButtons so touch and mouse both fire Activated.
+-- Every visible control is wired: badge, rail, search, rows, switches,
+-- sliders, cyclers, keybinds, master enable, reset, save, panic, close.
 --------------------------------------------------------------------------
 
 UI = {
@@ -3193,10 +3194,49 @@ UI = {
 	detail = nil,
 	rows = {},
 	widgets = {},
+	railButtons = {},
 	category = "Aim",
 	selected = "aimbot",
 	query = "",
 }
+
+local function click(object, fn)
+	object.Activated:Connect(function()
+		local ok, err = pcall(fn)
+		if not ok then
+			warn("[R Client] click: " .. tostring(err))
+		end
+	end)
+end
+
+local function hover(object, normal, hovered)
+	object.MouseEnter:Connect(function()
+		tween(object, { BackgroundTransparency = hovered }, 0.1)
+	end)
+	object.MouseLeave:Connect(function()
+		tween(object, { BackgroundTransparency = normal }, 0.1)
+	end)
+end
+
+local function chip(parent, text, width, order)
+	local item = create("TextLabel", {
+		BackgroundColor3 = Theme.card,
+		BackgroundTransparency = 0.1,
+		Size = UDim2.fromOffset(px(width or 54), px(17)),
+		Font = Enum.Font.GothamBold,
+		Text = text,
+		TextColor3 = Theme.accentSoft,
+		TextSize = px(8),
+		TextXAlignment = Enum.TextXAlignment.Center,
+		LayoutOrder = order or 0,
+	}, parent)
+	round(item, px(8))
+	return item
+end
+
+--------------------------------------------------------------------------
+-- Drag plumbing (sliders and the badge)
+--------------------------------------------------------------------------
 
 local drag = { active = false, handler = nil }
 
@@ -3218,97 +3258,158 @@ UserInputService.InputEnded:Connect(function(item)
 	end
 end)
 
-local function makeSwitch(parent, initial, changed)
-	local track = create("Frame", {
-		Size = UDim2.fromOffset(px(26), px(14)),
-		Position = UDim2.new(1, -px(50), 0.5, -px(7)),
+--------------------------------------------------------------------------
+-- Widgets
+--------------------------------------------------------------------------
+
+local function makeSwitch(parent, initial, position, changed)
+	local button = create("TextButton", {
 		BackgroundColor3 = initial and Theme.accent or Theme.stroke,
-		BackgroundTransparency = initial and 0.1 or 0.35,
+		BackgroundTransparency = initial and 0.05 or 0.25,
+		Size = UDim2.fromOffset(px(30), px(16)),
+		Position = position,
+		AutoButtonColor = false,
+		Text = "",
+		Active = true,
 	}, parent)
-	round(track, px(7))
+	round(button, px(8))
 	local knob = create("Frame", {
-		Size = UDim2.fromOffset(px(10), px(10)),
-		Position = UDim2.fromOffset(initial and px(14) or px(2), px(2)),
 		BackgroundColor3 = initial and Theme.text or Theme.dim,
-	}, track)
-	round(knob, px(5))
+		Size = UDim2.fromOffset(px(12), px(12)),
+		Position = UDim2.fromOffset(initial and px(16) or px(2), px(2)),
+	}, button)
+	round(knob, px(6))
+
+	local state = initial
 
 	local function set(value, silent)
-		tween(track, {
+		state = value
+		tween(button, {
 			BackgroundColor3 = value and Theme.accent or Theme.stroke,
-			BackgroundTransparency = value and 0.1 or 0.35,
-		}, 0.12)
+			BackgroundTransparency = value and 0.05 or 0.25,
+		}, 0.1)
 		tween(knob, {
-			Position = UDim2.fromOffset(value and px(14) or px(2), px(2)),
+			Position = UDim2.fromOffset(value and px(16) or px(2), px(2)),
 			BackgroundColor3 = value and Theme.text or Theme.dim,
-		}, 0.12)
+		}, 0.1)
 		if not silent and changed then
 			changed(value)
 		end
 	end
-	return set
+
+	click(button, function()
+		set(not state, true)
+		if changed then
+			changed(state)
+		end
+	end)
+	return set, button
 end
+
+--------------------------------------------------------------------------
+-- Module rows
+--------------------------------------------------------------------------
 
 local function makeRow(parent, module)
 	local row = create("TextButton", {
 		BackgroundColor3 = Theme.row,
-		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, px(29)),
+		BackgroundTransparency = on(module.id) and 0.45 or 0.75,
+		Size = UDim2.new(1, 0, 0, px(32)),
 		AutoButtonColor = false,
 		Text = "",
 		ClipsDescendants = true,
+		Active = true,
 	}, parent)
-	round(row, px(6))
+	round(row, px(7))
+
+	local bar = create("Frame", {
+		BackgroundColor3 = Theme.accent,
+		BackgroundTransparency = on(module.id) and 0 or 1,
+		Size = UDim2.fromOffset(px(2), px(18)),
+		Position = UDim2.fromOffset(px(4), px(7)),
+	}, row)
+	round(bar, px(1))
+
+	local dot = create("Frame", {
+		BackgroundColor3 = on(module.id) and Theme.accent or Theme.muted,
+		Size = UDim2.fromOffset(px(4), px(4)),
+		Position = UDim2.fromOffset(px(12), px(14)),
+	}, row)
+	round(dot, px(2))
 
 	local name = create("TextLabel", {
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(px(9), 0),
-		Size = UDim2.new(1, -px(86), 1, 0),
+		Position = UDim2.fromOffset(px(21), 0),
+		Size = UDim2.new(1, -px(88), 1, 0),
 		Font = Enum.Font.GothamMedium,
 		Text = module.name,
-		TextColor3 = Theme.text,
+		TextColor3 = on(module.id) and Theme.text or Theme.dim,
 		TextSize = px(11),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextTruncate = Enum.TextTruncate.AtEnd,
 	}, row)
 
-	local setSwitch = makeSwitch(row, on(module.id), function()
-		toggle(module.id)
+	local switch, switchButton = makeSwitch(row, on(module.id), UDim2.new(1, -px(54), 0.5, -px(8)), function(value)
+		set(module.id, "enabled", value)
 	end)
 
-	local more = create("TextButton", {
+	local settings = create("TextButton", {
+		BackgroundColor3 = Theme.card,
 		BackgroundTransparency = 1,
-		Position = UDim2.new(1, -px(18), 0, 0),
-		Size = UDim2.fromOffset(px(18), px(29)),
-		Font = Enum.Font.GothamBold,
-		Text = "·",
-		TextSize = px(20),
-		TextColor3 = Theme.muted,
+		Position = UDim2.new(1, -px(18), 0, px(6)),
+		Size = UDim2.fromOffset(px(16), px(20)),
 		AutoButtonColor = false,
+		Font = Enum.Font.GothamBold,
+		Text = "›",
+		TextColor3 = Theme.muted,
+		TextSize = px(14),
+		Active = true,
 	}, row)
-	more.Activated:Connect(function()
+	click(settings, function()
 		UI.select(module.id)
+		notify(module.name .. " settings", Theme.accentSoft)
+	end)
+	settings.MouseEnter:Connect(function()
+		settings.TextColor3 = Theme.accent2 or Theme.accentSoft
+	end)
+	settings.MouseLeave:Connect(function()
+		settings.TextColor3 = Theme.muted
 	end)
 
-	row.Activated:Connect(function()
+	click(row, function()
 		toggle(module.id)
-		setSwitch(on(module.id), true)
-		row.BackgroundTransparency = on(module.id) and 0.55 or 1
 	end)
-	row.MouseEnter:Connect(function()
-		row.BackgroundTransparency = 0.4
-	end)
-	row.MouseLeave:Connect(function()
-		row.BackgroundTransparency = on(module.id) and 0.55 or 1
-	end)
+	hover(row, on(module.id) and 0.45 or 0.75, 0.35)
 
-	row.BackgroundTransparency = on(module.id) and 0.55 or 1
-	return { frame = row, switch = setSwitch, module = module }
+	local record = {
+		frame = row,
+		module = module,
+		switch = switch,
+		bar = bar,
+		dot = dot,
+		label = name,
+	}
+
+	function record.refresh()
+		local state = on(module.id)
+		row.BackgroundTransparency = state and 0.45 or 0.75
+		bar.BackgroundTransparency = state and 0 or 1
+		dot.BackgroundColor3 = state and Theme.accent or Theme.muted
+		name.TextColor3 = state and Theme.text or Theme.dim
+		switch(state, true)
+	end
+
+	return record
 end
+
+--------------------------------------------------------------------------
+-- Detail widgets
+--------------------------------------------------------------------------
 
 local function clearDetail()
 	for _, child in ipairs(UI.detail:GetChildren()) do
-		if child:IsA("Frame") or child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("ScrollingFrame") then
+		local kind = child.ClassName
+		if kind ~= "UICorner" and kind ~= "UIStroke" and kind ~= "UIPadding" and kind ~= "UIGradient" then
 			child:Destroy()
 		end
 	end
@@ -3317,41 +3418,80 @@ end
 
 local function makeSlider(parent, module, setting, order)
 	local wrap = create("Frame", {
-		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, px(34)),
+		BackgroundColor3 = Theme.row,
+		BackgroundTransparency = 0.72,
+		Size = UDim2.new(1, 0, 0, px(40)),
 		LayoutOrder = order,
 	}, parent)
+	round(wrap, px(6))
+
 	local title = create("TextLabel", {
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, -px(56), 0, px(20)),
+		Position = UDim2.fromOffset(px(8), px(3)),
+		Size = UDim2.new(1, -px(70), 0, px(16)),
 		Font = Enum.Font.Gotham,
 		Text = setting.name,
 		TextColor3 = Theme.dim,
-		TextSize = px(11),
+		TextSize = px(10),
 		TextXAlignment = Enum.TextXAlignment.Left,
 	}, wrap)
+
 	local value = create("TextLabel", {
 		BackgroundTransparency = 1,
-		Position = UDim2.new(1, -px(56), 0, 0),
-		Size = UDim2.fromOffset(px(56), px(20)),
-		Font = Enum.Font.GothamMedium,
-		Text = tostring(get(module.id, setting.key)),
+		Position = UDim2.new(1, -px(62), px(3)),
+		Size = UDim2.fromOffset(px(54), px(16)),
+		Font = Enum.Font.GothamBold,
+		Text = "",
 		TextColor3 = Theme.accentSoft,
-		TextSize = px(11),
+		TextSize = px(10),
 		TextXAlignment = Enum.TextXAlignment.Right,
 	}, wrap)
 
-	local track = create("Frame", {
+	local minus = create("TextButton", {
+		BackgroundColor3 = Theme.card,
+		BackgroundTransparency = 0.1,
+		Position = UDim2.fromOffset(px(8), px(22)),
+		Size = UDim2.fromOffset(px(16), px(14)),
+		AutoButtonColor = false,
+		Font = Enum.Font.GothamBold,
+		Text = "-",
+		TextColor3 = Theme.dim,
+		TextSize = px(11),
+		Active = true,
+	}, wrap)
+	round(minus, px(4))
+
+	local plus = create("TextButton", {
+		BackgroundColor3 = Theme.card,
+		BackgroundTransparency = 0.1,
+		Position = UDim2.new(1, -px(24), px(22)),
+		Size = UDim2.fromOffset(px(16), px(14)),
+		AutoButtonColor = false,
+		Font = Enum.Font.GothamBold,
+		Text = "+",
+		TextColor3 = Theme.accentSoft,
+		TextSize = px(11),
+		Active = true,
+	}, wrap)
+	round(plus, px(4))
+
+	local track = create("TextButton", {
 		BackgroundColor3 = Theme.stroke,
-		Position = UDim2.fromOffset(0, px(25)),
-		Size = UDim2.new(1, 0, 0, px(5)),
+		BackgroundTransparency = 0.1,
+		Position = UDim2.fromOffset(px(28), px(27)),
+		Size = UDim2.new(1, -px(58), 0, px(5)),
+		AutoButtonColor = false,
+		Text = "",
+		Active = true,
 	}, wrap)
 	round(track, px(3))
+
 	local fill = create("Frame", {
 		BackgroundColor3 = Theme.accent,
 		Size = UDim2.new(0, 0, 1, 0),
 	}, track)
 	round(fill, px(3))
+
 	local knob = create("Frame", {
 		BackgroundColor3 = Theme.text,
 		Size = UDim2.fromOffset(px(9), px(9)),
@@ -3379,13 +3519,7 @@ local function makeSlider(parent, module, setting, order)
 		end
 	end
 
-	local function apply(x)
-		local bar = track.AbsoluteSize.X
-		if bar <= 0 then
-			return
-		end
-		local ratio = clamp((x - track.AbsolutePosition.X) / bar, 0, 1)
-		local raw = setting.min + (setting.max - setting.min) * ratio
+	local function commit(raw)
 		local step = setting.step or 1
 		raw = math.floor(raw / step + 0.5) * step
 		raw = clamp(raw, setting.min, setting.max)
@@ -3393,56 +3527,72 @@ local function makeSlider(parent, module, setting, order)
 		render(raw)
 	end
 
+	local function applyX(x)
+		local width = track.AbsoluteSize.X
+		if width <= 0 then
+			return
+		end
+		local ratio = clamp((x - track.AbsolutePosition.X) / width, 0, 1)
+		commit(setting.min + (setting.max - setting.min) * ratio)
+	end
+
 	track.InputBegan:Connect(function(item)
 		local kind = item.UserInputType
 		if kind == Enum.UserInputType.MouseButton1 or kind == Enum.UserInputType.Touch then
 			drag.active = true
-			drag.handler = apply
-			apply(item.Position.X)
+			drag.handler = applyX
+			applyX(item.Position.X)
 		end
 	end)
 
-	render(get(module.id, setting.key))
+	click(minus, function()
+		commit((get(module.id, setting.key) or setting.min) - (setting.step or 1))
+	end)
+	click(plus, function()
+		commit((get(module.id, setting.key) or setting.min) + (setting.step or 1))
+	end)
+
+	render(get(module.id, setting.key) or setting.min)
 	UI.widgets[#UI.widgets + 1] = function()
-		render(get(module.id, setting.key))
+		render(get(module.id, setting.key) or setting.min)
 	end
 end
 
 local function makeCycle(parent, module, setting, order)
-	local row = create("TextButton", {
+	local wrap = create("Frame", {
 		BackgroundColor3 = Theme.row,
-		BackgroundTransparency = 0.25,
-		Size = UDim2.new(1, 0, 0, px(27)),
-		AutoButtonColor = false,
-		Text = "",
+		BackgroundTransparency = 0.72,
+		Size = UDim2.new(1, 0, 0, px(30)),
 		LayoutOrder = order,
 	}, parent)
-	round(row, px(6))
+	round(wrap, px(6))
+
 	local title = create("TextLabel", {
 		BackgroundTransparency = 1,
 		Position = UDim2.fromOffset(px(8), 0),
-		Size = UDim2.new(1, -px(92), 1, 0),
+		Size = UDim2.new(1, -px(96), 1, 0),
 		Font = Enum.Font.Gotham,
 		Text = setting.name,
 		TextColor3 = Theme.dim,
-		TextSize = px(11),
+		TextSize = px(10),
 		TextXAlignment = Enum.TextXAlignment.Left,
-	}, row)
-	local pill = create("TextButton", {
+		TextTruncate = Enum.TextTruncate.AtEnd,
+	}, wrap)
+
+	local pill = create("TextLabel", {
 		BackgroundColor3 = Theme.card,
 		BackgroundTransparency = 0.1,
-		Position = UDim2.new(1, -px(84), 0.5, -px(9)),
-		Size = UDim2.fromOffset(px(76), px(18)),
-		AutoButtonColor = false,
+		Position = UDim2.new(1, -px(78), 0.5, -px(9)),
+		Size = UDim2.fromOffset(px(56), px(18)),
 		Font = Enum.Font.GothamMedium,
-		Text = tostring(get(module.id, setting.key)),
+		Text = "",
 		TextColor3 = Theme.accentSoft,
-		TextSize = px(10),
+		TextSize = px(9),
 		TextTruncate = Enum.TextTruncate.AtEnd,
-	}, row)
+	}, wrap)
 	round(pill, px(9))
 
-	local function advance()
+	local function step(direction)
 		local values = setting.values
 		local current = get(module.id, setting.key)
 		local index = 1
@@ -3452,42 +3602,86 @@ local function makeCycle(parent, module, setting, order)
 				break
 			end
 		end
-		index = index % #values + 1
+		index = (index - 1 + direction) % #values + 1
 		set(module.id, setting.key, values[index])
 		pill.Text = values[index]
 	end
 
-	row.Activated:Connect(advance)
-	pill.Activated:Connect(advance)
-	UI.widgets[#UI.widgets + 1] = function()
+	local back = create("TextButton", {
+		BackgroundColor3 = Theme.card,
+		BackgroundTransparency = 0.1,
+		Position = UDim2.new(1, -px(96), 0.5, -px(9)),
+		Size = UDim2.fromOffset(px(16), px(18)),
+		AutoButtonColor = false,
+		Font = Enum.Font.GothamBold,
+		Text = "‹",
+		TextColor3 = Theme.dim,
+		TextSize = px(11),
+		Active = true,
+	}, wrap)
+	round(back, px(6))
+
+	local forward = create("TextButton", {
+		BackgroundColor3 = Theme.accent,
+		BackgroundTransparency = 0.78,
+		Position = UDim2.new(1, -px(20), 0.5, -px(9)),
+		Size = UDim2.fromOffset(px(16), px(18)),
+		AutoButtonColor = false,
+		Font = Enum.Font.GothamBold,
+		Text = "›",
+		TextColor3 = Theme.accentSoft,
+		TextSize = px(11),
+		Active = true,
+	}, wrap)
+	round(forward, px(6))
+
+	click(back, function()
+		step(-1)
+	end)
+	click(forward, function()
+		step(1)
+	end)
+
+	local function refresh()
 		pill.Text = tostring(get(module.id, setting.key))
 	end
+	refresh()
+	UI.widgets[#UI.widgets + 1] = refresh
 end
 
 local function makeToggle(parent, module, setting, order)
 	local row = create("TextButton", {
-		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, px(26)),
+		BackgroundColor3 = Theme.row,
+		BackgroundTransparency = 0.72,
+		Size = UDim2.new(1, 0, 0, px(28)),
 		AutoButtonColor = false,
 		Text = "",
 		LayoutOrder = order,
+		Active = true,
 	}, parent)
+	round(row, px(6))
+
 	local title = create("TextLabel", {
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, -px(46), 1, 0),
+		Position = UDim2.fromOffset(px(8), 0),
+		Size = UDim2.new(1, -px(52), 1, 0),
 		Font = Enum.Font.Gotham,
 		Text = setting.name,
 		TextColor3 = Theme.dim,
-		TextSize = px(11),
+		TextSize = px(10),
 		TextXAlignment = Enum.TextXAlignment.Left,
 	}, row)
-	local setSwitch = makeSwitch(row, get(module.id, setting.key) == true, function(value)
+
+	local setSwitch = makeSwitch(row, get(module.id, setting.key) == true, UDim2.new(1, -px(36), 0.5, -px(8)), function(value)
 		set(module.id, setting.key, value)
 	end)
-	row.Activated:Connect(function()
+
+	click(row, function()
 		set(module.id, setting.key, not get(module.id, setting.key))
-		setSwitch(get(module.id, setting.key), true)
+		setSwitch(get(module.id, setting.key) == true, true)
 	end)
+	hover(row, 0.72, 0.6)
+
 	UI.widgets[#UI.widgets + 1] = function()
 		setSwitch(get(module.id, setting.key) == true, true)
 	end
@@ -3496,13 +3690,15 @@ end
 local function makeKey(parent, module, setting, order)
 	local row = create("TextButton", {
 		BackgroundColor3 = Theme.row,
-		BackgroundTransparency = 0.25,
-		Size = UDim2.new(1, 0, 0, px(27)),
+		BackgroundTransparency = 0.72,
+		Size = UDim2.new(1, 0, 0, px(28)),
 		AutoButtonColor = false,
 		Text = "",
 		LayoutOrder = order,
+		Active = true,
 	}, parent)
 	round(row, px(6))
+
 	local title = create("TextLabel", {
 		BackgroundTransparency = 1,
 		Position = UDim2.fromOffset(px(8), 0),
@@ -3510,50 +3706,82 @@ local function makeKey(parent, module, setting, order)
 		Font = Enum.Font.Gotham,
 		Text = setting.name,
 		TextColor3 = Theme.dim,
-		TextSize = px(11),
+		TextSize = px(10),
 		TextXAlignment = Enum.TextXAlignment.Left,
 	}, row)
+
 	local pill = create("TextLabel", {
 		BackgroundColor3 = Theme.card,
 		BackgroundTransparency = 0.1,
 		Position = UDim2.new(1, -px(84), 0.5, -px(9)),
-		Size = UDim2.fromOffset(px(76), px(18)),
+		Size = UDim2.fromOffset(px(62), px(18)),
 		Font = Enum.Font.GothamMedium,
 		Text = tostring(get(module.id, setting.key)),
 		TextColor3 = Theme.accentSoft,
-		TextSize = px(10),
+		TextSize = px(9),
+		TextTruncate = Enum.TextTruncate.AtEnd,
 	}, row)
 	round(pill, px(9))
 
-	row.Activated:Connect(function()
+	local clear = create("TextButton", {
+		BackgroundColor3 = Theme.card,
+		BackgroundTransparency = 1,
+		Position = UDim2.new(1, -px(18), 0.5, -px(9)),
+		Size = UDim2.fromOffset(px(16), px(18)),
+		AutoButtonColor = false,
+		Font = Enum.Font.GothamBold,
+		Text = "×",
+		TextColor3 = Theme.muted,
+		TextSize = px(10),
+		Active = true,
+	}, row)
+	click(clear, function()
+		set(module.id, setting.key, "None")
+		pill.Text = "None"
+	end)
+
+	click(row, function()
 		CAPTURE = true
-		pill.Text = "press key"
+		pill.Text = "press"
+		pill.TextColor3 = Theme.warn
 		local connection
-		connection = UserInputService.InputBegan:Connect(function(item, processed)
+		local function finish()
+			CAPTURE = false
+			if connection then
+				connection:Disconnect()
+				connection = nil
+			end
+		end
+		connection = UserInputService.InputBegan:Connect(function(item)
 			if item.UserInputType ~= Enum.UserInputType.Keyboard then
 				return
 			end
-			CAPTURE = false
-			set(module.id, setting.key, item.KeyCode.Name)
-			pill.Text = item.KeyCode.Name
-			connection:Disconnect()
+			local key = item.KeyCode.Name
+			set(module.id, setting.key, key == "Escape" and "None" or key)
+			pill.Text = tostring(get(module.id, setting.key))
+			pill.TextColor3 = Theme.accentSoft
+			finish()
 		end)
-		task.delay(4, function()
+		task.delay(5, function()
 			if CAPTURE then
-				CAPTURE = false
+				finish()
 				pill.Text = tostring(get(module.id, setting.key))
-				if connection then
-					connection:Disconnect()
-				end
+				pill.TextColor3 = Theme.accentSoft
 			end
 		end)
 	end)
+
 	UI.widgets[#UI.widgets + 1] = function()
 		if not CAPTURE then
 			pill.Text = tostring(get(module.id, setting.key))
+			pill.TextColor3 = Theme.accentSoft
 		end
 	end
 end
+
+--------------------------------------------------------------------------
+-- Detail pane
+--------------------------------------------------------------------------
 
 local function buildDetail()
 	clearDetail()
@@ -3561,73 +3789,142 @@ local function buildDetail()
 	if not module then
 		return
 	end
-	local scroll = create("ScrollingFrame", {
+	local settingsCount = #module.settings
+
+	local head = create("Frame", {
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 1, 0),
-		CanvasSize = UDim2.new(),
-		AutomaticCanvasSize = Enum.AutomaticSize.Y,
-		ScrollBarThickness = px(2),
-		ScrollBarImageColor3 = Theme.accent,
-		BorderSizePixel = 0,
+		Size = UDim2.new(1, 0, 0, px(40)),
 	}, UI.detail)
-	create("UIListLayout", {
-		Padding = UDim.new(0, px(5)),
-		SortOrder = Enum.SortOrder.LayoutOrder,
-	}, scroll)
 
 	local title = create("TextLabel", {
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, px(20)),
+		Position = UDim2.fromOffset(0, 0),
+		Size = UDim2.new(1, -px(58), 0, px(20)),
 		Font = Enum.Font.GothamBold,
 		Text = module.name,
 		TextColor3 = Theme.text,
 		TextSize = px(14),
 		TextXAlignment = Enum.TextXAlignment.Left,
-		LayoutOrder = 0,
-	}, scroll)
+	}, head)
+
+	local meta = chip(head, string.upper(module.cat), 52)
+	meta.Position = UDim2.fromOffset(0, px(22))
+
+	local count = create("TextLabel", {
+		BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(px(58), px(22)),
+		Size = UDim2.fromOffset(px(80), px(17)),
+		Font = Enum.Font.Gotham,
+		Text = settingsCount .. " settings",
+		TextColor3 = Theme.muted,
+		TextSize = px(9),
+		TextXAlignment = Enum.TextXAlignment.Left,
+	}, head)
+
+	local master = create("TextButton", {
+		BackgroundColor3 = Theme.accent,
+		BackgroundTransparency = on(module.id) and 0.1 or 0.82,
+		Position = UDim2.new(1, -px(52), 0, px(2)),
+		Size = UDim2.fromOffset(px(52), px(20)),
+		AutoButtonColor = false,
+		Font = Enum.Font.GothamBold,
+		Text = on(module.id) and "ON" or "OFF",
+		TextColor3 = on(module.id) and Theme.text or Theme.dim,
+		TextSize = px(9),
+		Active = true,
+	}, head)
+	round(master, px(6))
+
+	local function refreshMaster()
+		local state = on(module.id)
+		master.BackgroundTransparency = state and 0.1 or 0.82
+		master.Text = state and "ON" or "OFF"
+		master.TextColor3 = state and Theme.text or Theme.dim
+	end
+
+	click(master, function()
+		toggle(module.id)
+		refreshMaster()
+		if UI.rows[module.id] then
+			UI.rows[module.id].refresh()
+		end
+	end)
+
 	local desc = create("TextLabel", {
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, px(28)),
+		Position = UDim2.fromOffset(0, px(42)),
+		Size = UDim2.new(1, 0, 0, px(24)),
 		Font = Enum.Font.Gotham,
 		Text = module.desc,
 		TextColor3 = Theme.muted,
-		TextSize = px(10),
+		TextSize = px(9),
 		TextWrapped = true,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Top,
-		LayoutOrder = 1,
-	}, scroll)
-	local master = create("TextButton", {
-		BackgroundColor3 = Theme.accent,
-		BackgroundTransparency = on(module.id) and 0.15 or 0.75,
-		Size = UDim2.new(1, 0, 0, px(28)),
+	}, UI.detail)
+
+	local footer = create("Frame", {
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, 0, 0, px(22)),
+		Position = UDim2.new(0, 0, 1, -px(22)),
+	}, UI.detail)
+
+	local reset = create("TextButton", {
+		BackgroundColor3 = Theme.card,
+		BackgroundTransparency = 0.1,
+		Size = UDim2.fromOffset(px(58), px(20)),
 		AutoButtonColor = false,
 		Font = Enum.Font.GothamBold,
-		Text = on(module.id) and "ENABLED" or "DISABLED",
-		TextColor3 = on(module.id) and Theme.text or Theme.dim,
-		TextSize = px(11),
-		LayoutOrder = 2,
-	}, scroll)
-	round(master, px(7))
-	master.Activated:Connect(function()
-		toggle(module.id)
-		master.BackgroundTransparency = on(module.id) and 0.15 or 0.75
-		master.Text = on(module.id) and "ENABLED" or "DISABLED"
-		master.TextColor3 = on(module.id) and Theme.text or Theme.dim
-		for _, row in pairs(UI.rows) do
-			if row.module.id == module.id then
-				row.switch(on(module.id), true)
-			end
+		Text = "RESET",
+		TextColor3 = Theme.dim,
+		TextSize = px(8),
+		Active = true,
+	}, footer)
+	round(reset, px(5))
+	click(reset, function()
+		for _, setting in ipairs(module.settings) do
+			Config[module.id][setting.key] = setting.def
 		end
+		buildDetail()
+		notify(module.name .. " reset", Theme.accentSoft)
 	end)
-	UI.widgets[#UI.widgets + 1] = function()
-		master.BackgroundTransparency = on(module.id) and 0.15 or 0.75
-		master.Text = on(module.id) and "ENABLED" or "DISABLED"
-		master.TextColor3 = on(module.id) and Theme.text or Theme.dim
-	end
 
-	local order = 3
+	local panic = create("TextButton", {
+		BackgroundColor3 = Theme.bad,
+		BackgroundTransparency = 0.82,
+		Position = UDim2.new(1, -px(58), 0, 0),
+		Size = UDim2.fromOffset(px(58), px(20)),
+		AutoButtonColor = false,
+		Font = Enum.Font.GothamBold,
+		Text = "PANIC",
+		TextColor3 = Theme.bad,
+		TextSize = px(8),
+		Active = true,
+	}, footer)
+	round(panic, px(5))
+	click(panic, function()
+		doPanic()
+	end)
+
+	local scroll = create("ScrollingFrame", {
+		BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(0, px(76)),
+		Size = UDim2.new(1, 0, 1, -px(100)),
+		CanvasSize = UDim2.new(),
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		ScrollBarThickness = px(2),
+		ScrollBarImageColor3 = Theme.accent,
+		BorderSizePixel = 0,
+		ScrollingDirection = Enum.ScrollingDirection.Y,
+	}, UI.detail)
+	create("UIListLayout", {
+		Padding = UDim.new(0, px(4)),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	}, scroll)
+
+	local order = 0
 	for _, setting in ipairs(module.settings) do
+		order = order + 1
 		if setting.type == "slider" then
 			makeSlider(scroll, module, setting, order)
 		elseif setting.type == "cycle" then
@@ -3637,33 +3934,48 @@ local function buildDetail()
 		elseif setting.type == "key" then
 			makeKey(scroll, module, setting, order)
 		end
-		order = order + 1
 	end
+
+	UI.widgets[#UI.widgets + 1] = refreshMaster
 end
 
 function UI.select(id)
 	UI.selected = id
-	buildDetail()
 	local module = Registry[id]
-	if module and module.cat ~= UI.category then
-		UI.category = module.cat
-		UI.filter()
+	if module then
+		buildDetail()
+		if module.cat ~= UI.category and UI.query == "" then
+			UI.category = module.cat
+			UI.filter()
+		end
 	end
 end
 
 function UI.filter()
 	local query = string.lower(UI.query or "")
 	local showAll = query ~= ""
+	local shown = 0
 	for _, row in pairs(UI.rows) do
 		local module = row.module
 		local matchesCategory = showAll or module.cat == UI.category
 		local matchesQuery = query == "" or string.find(string.lower(module.name), query, 1, true) or string.find(string.lower(module.cat), query, 1, true)
-		row.frame.Visible = matchesCategory and matchesQuery
+		local visible = matchesCategory and matchesQuery
+		row.frame.Visible = visible
+		if visible then
+			shown = shown + 1
+		end
 	end
-	for _, button in pairs(UI.railButtons or {}) do
+	for _, button in ipairs(UI.railButtons) do
 		local active = not showAll and button.cat == UI.category
-		button.frame.BackgroundTransparency = active and 0.1 or 1
+		button.frame.BackgroundTransparency = active and 0.08 or 1
 		button.label.TextColor3 = active and Theme.text or Theme.muted
+		button.mark.BackgroundTransparency = active and 0 or 1
+	end
+	if UI.empty then
+		UI.empty.Visible = shown == 0
+	end
+	if UI.listHead then
+		UI.listHead.Text = string.upper(showAll and "search" or UI.category) .. "  ·  " .. shown
 	end
 end
 
@@ -3675,195 +3987,326 @@ function UI.setOpen(value)
 	if value then
 		UI.panel.Visible = true
 		UI.panel.Position = UDim2.new(0.5, 0, 0.56, 0)
-		tween(UI.panel, { Position = UDim2.new(0.5, 0, 0.5, 0) }, 0.18)
+		tween(UI.panel, { Position = UDim2.new(0.5, 0, 0.5, 0) }, 0.16)
 		UI.filter()
+		if UI.badgeDot then
+			UI.badgeDot.BackgroundColor3 = Theme.good
+		end
 	else
-		tween(UI.panel, { Position = UDim2.new(0.5, 0, 0.62, 0) }, 0.14)
-		task.delay(0.15, function()
+		tween(UI.panel, { Position = UDim2.new(0.5, 0, 0.6, 0) }, 0.12)
+		task.delay(0.13, function()
 			if not UI.open and UI.panel then
 				UI.panel.Visible = false
 			end
 		end)
+		if UI.badgeDot then
+			UI.badgeDot.BackgroundColor3 = Theme.accent
+		end
 	end
 end
+
+--------------------------------------------------------------------------
+-- Badge
+--------------------------------------------------------------------------
 
 local function buildBadge()
 	local badge = create("TextButton", {
 		Name = "RBadge",
 		BackgroundColor3 = Theme.card,
-		Size = UDim2.fromOffset(px(52), px(52)),
-		Position = UDim2.new(0, px(14), 1, -px(66)),
+		Size = UDim2.fromOffset(px(54), px(54)),
+		Position = UDim2.new(0, px(14), 1, -px(68)),
 		AutoButtonColor = false,
 		Text = "",
 		ClipsDescendants = false,
+		Active = true,
 	}, GUI)
-	round(badge, px(14))
-	edge(badge, Theme.accent, 1, 0.35)
+	round(badge, px(15))
+	edge(badge, Theme.accent, 1, 0.25)
 	local fill = create("Frame", {
 		BackgroundColor3 = Theme.panel,
 		Size = UDim2.fromScale(1, 1),
-		BackgroundTransparency = 0.05,
+		BackgroundTransparency = 0.02,
 	}, badge)
-	round(fill, px(13))
-	gradient(fill, Color3.fromRGB(58, 52, 74), Color3.fromRGB(16, 14, 22))
+	round(fill, px(14))
+	gradient(fill, Color3.fromRGB(56, 48, 78), Color3.fromRGB(14, 12, 20))
 	create("TextLabel", {
 		BackgroundTransparency = 1,
 		Size = UDim2.fromScale(1, 1),
 		Font = Enum.Font.GothamBlack,
 		Text = "R",
 		TextColor3 = Theme.text,
-		TextSize = px(26),
+		TextSize = px(27),
 	}, badge)
 	local dot = create("Frame", {
 		BackgroundColor3 = Theme.accent,
-		Size = UDim2.fromOffset(px(7), px(7)),
-		Position = UDim2.new(1, -px(9), 0, px(6)),
+		Size = UDim2.fromOffset(px(8), px(8)),
+		Position = UDim2.new(1, -px(10), 0, px(6)),
 	}, badge)
 	round(dot, px(4))
+	edge(dot, Theme.black, 1, 0.4)
+	UI.badgeDot = dot
 
-	local pressStart, startPosition, moved = nil, nil, false
+	local press, origin, moved = nil, nil, false
+
 	badge.InputBegan:Connect(function(item)
 		local kind = item.UserInputType
 		if kind == Enum.UserInputType.MouseButton1 or kind == Enum.UserInputType.Touch then
-			pressStart = item.Position
-			startPosition = badge.Position
+			press = item.Position
+			origin = badge.Position
 			moved = false
 		end
 	end)
+
 	UserInputService.InputChanged:Connect(function(item)
-		if not pressStart then
+		if not press then
 			return
 		end
 		local kind = item.UserInputType
 		if kind ~= Enum.UserInputType.MouseMovement and kind ~= Enum.UserInputType.Touch then
 			return
 		end
-		local delta = item.Position - pressStart
-		if delta.Magnitude > px(6) then
+		local delta = item.Position - press
+		if delta.Magnitude > px(7) then
 			moved = true
 		end
 		if moved then
-			badge.Position = UDim2.new(startPosition.X.Scale, startPosition.X.Offset + delta.X, startPosition.Y.Scale, startPosition.Y.Offset + delta.Y)
-		end
-	end)
-	UserInputService.InputEnded:Connect(function()
-		if pressStart then
-			pressStart = nil
-			if not moved then
-				UI.setOpen(not UI.open)
-			end
+			badge.Position = UDim2.new(origin.X.Scale, origin.X.Offset + delta.X, origin.Y.Scale, origin.Y.Offset + delta.Y)
 		end
 	end)
 
+	UserInputService.InputEnded:Connect(function(item)
+		local kind = item.UserInputType
+		if kind ~= Enum.UserInputType.MouseButton1 and kind ~= Enum.UserInputType.Touch then
+			return
+		end
+		if press then
+			press = nil
+		end
+	end)
+
+	-- One toggle path only: Activated fires on touch and mouse alike.
+	click(badge, function()
+		if moved then
+			moved = false
+			return
+		end
+		UI.setOpen(not UI.open)
+	end)
+
 	UI.badge = badge
+end
+
+--------------------------------------------------------------------------
+-- Panel
+--------------------------------------------------------------------------
+
+local function railButton(parent, label, category, order)
+	local button = create("TextButton", {
+		BackgroundColor3 = Theme.accent,
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(px(38), px(30)),
+		AutoButtonColor = false,
+		Text = "",
+		LayoutOrder = order,
+		Active = true,
+	}, parent)
+	round(button, px(8))
+
+	local mark = create("Frame", {
+		BackgroundColor3 = Theme.accent,
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(px(2), px(16)),
+		Position = UDim2.fromOffset(px(-2), px(7)),
+	}, button)
+	round(mark, px(1))
+
+	local text = create("TextLabel", {
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		Font = Enum.Font.GothamBold,
+		Text = label,
+		TextColor3 = Theme.muted,
+		TextSize = px(9),
+	}, button)
+
+	click(button, function()
+		UI.category = category
+		UI.query = ""
+		if UI.searchBox then
+			UI.searchBox.Text = ""
+		end
+		UI.filter()
+	end)
+	button.MouseEnter:Connect(function()
+		if UI.category ~= category or UI.query ~= "" then
+			button.BackgroundTransparency = 0.82
+		end
+	end)
+	button.MouseLeave:Connect(function()
+		if UI.category ~= category or UI.query ~= "" then
+			button.BackgroundTransparency = 1
+		end
+	end)
+
+	return { frame = button, label = text, mark = mark, cat = category }
 end
 
 local function buildPanel()
 	local panel = create("Frame", {
 		Name = "Panel",
 		BackgroundColor3 = Theme.panel,
-		Size = UDim2.fromScale(0.94, 0.72),
+		Size = UDim2.fromScale(0.94, 0.76),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
 		Visible = false,
 		ClipsDescendants = true,
+		Active = true,
 	}, GUI)
-	round(panel, px(12))
-	edge(panel, Theme.stroke, 1, 0.1)
-	gradient(panel, Color3.fromRGB(22, 19, 30), Color3.fromRGB(10, 9, 14))
+	round(panel, px(14))
+	edge(panel, Theme.stroke, 1, 0.05)
+	gradient(panel, Color3.fromRGB(24, 20, 33), Color3.fromRGB(9, 8, 13))
 	local limit = Instance.new("UISizeConstraint")
-	limit.MaxSize = Vector2.new(760, 470)
+	limit.MaxSize = Vector2.new(820, 540)
+	limit.MinSize = Vector2.new(300, 260)
 	limit.Parent = panel
 	UI.panel = panel
 
+	-- header
 	local header = create("Frame", {
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, px(38)),
+		Size = UDim2.new(1, 0, 0, px(44)),
+		Active = true,
 	}, panel)
+
 	local mark = create("Frame", {
 		BackgroundColor3 = Theme.accent,
-		Size = UDim2.fromOffset(px(18), px(18)),
-		Position = UDim2.fromOffset(px(12), px(10)),
+		Size = UDim2.fromOffset(px(22), px(22)),
+		Position = UDim2.fromOffset(px(12), px(11)),
 	}, header)
-	round(mark, px(5))
+	round(mark, px(6))
+	gradient(mark, Theme.accentSoft, Theme.accentDeep)
 	create("TextLabel", {
 		BackgroundTransparency = 1,
 		Size = UDim2.fromScale(1, 1),
 		Font = Enum.Font.GothamBlack,
 		Text = "R",
 		TextColor3 = Theme.text,
-		TextSize = px(11),
+		TextSize = px(13),
 	}, mark)
-	label(header, "R CLIENT", px(13), Theme.text, true).Position = UDim2.fromOffset(px(38), px(9))
+
+	label(header, "R CLIENT", px(13), Theme.text, true).Position = UDim2.fromOffset(px(42), px(11))
+
 	local beta = create("TextLabel", {
 		BackgroundColor3 = Theme.accent,
-		BackgroundTransparency = 0.7,
-		Position = UDim2.fromOffset(px(112), px(11)),
-		Size = UDim2.fromOffset(px(34), px(16)),
+		BackgroundTransparency = 0.78,
+		Position = UDim2.fromOffset(px(118), px(14)),
+		Size = UDim2.fromOffset(px(36), px(16)),
 		Font = Enum.Font.GothamBold,
 		Text = "BETA",
 		TextColor3 = Theme.accentSoft,
 		TextSize = px(8),
+		Active = true,
 	}, header)
 	round(beta, px(8))
-	label(header, "v" .. VERSION, px(10), Theme.muted).Position = UDim2.fromOffset(px(152), px(13))
+	local betaButton = create("TextButton", {
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		Text = "",
+		Active = true,
+	}, beta)
+	click(betaButton, function()
+		notify("R Client " .. VERSION .. " beta - " .. #Order .. " modules", Theme.accentSoft)
+	end)
 
-	local tag = create("TextLabel", {
+	local version = create("TextButton", {
+		BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(px(160), px(13)),
+		Size = UDim2.fromOffset(px(54), px(18)),
+		AutoButtonColor = false,
+		Font = Enum.Font.Gotham,
+		Text = "v" .. VERSION,
+		TextColor3 = Theme.muted,
+		TextSize = px(9),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Active = true,
+	}, header)
+	click(version, function()
+		notify(string.format("%d modules - %d skins", #Order, #SkinCatalog), Theme.accentSoft)
+	end)
+
+	local user = create("TextButton", {
 		BackgroundColor3 = Theme.card,
-		Position = UDim2.new(1, -px(112), 0, px(11)),
-		Size = UDim2.fromOffset(px(78), px(17)),
+		BackgroundTransparency = 0.05,
+		Position = UDim2.new(1, -px(108), 0, px(13)),
+		Size = UDim2.fromOffset(px(72), px(18)),
+		AutoButtonColor = false,
 		Font = Enum.Font.GothamMedium,
 		Text = LP.Name,
 		TextColor3 = Theme.dim,
 		TextSize = px(9),
 		TextTruncate = Enum.TextTruncate.AtEnd,
+		Active = true,
 	}, header)
-	round(tag, px(8))
-
-	local close = create("TextButton", {
-		BackgroundTransparency = 1,
-		Position = UDim2.new(1, -px(28), 0, px(8)),
-		Size = UDim2.fromOffset(px(20), px(22)),
-		Font = Enum.Font.GothamBold,
-		Text = "×",
-		TextSize = px(18),
-		TextColor3 = Theme.dim,
-		AutoButtonColor = false,
-	}, header)
-	close.Activated:Connect(function()
-		UI.setOpen(false)
+	round(user, px(9))
+	click(user, function()
+		notify("logged in as " .. LP.Name, Theme.accentSoft)
 	end)
 
-	local divider = create("Frame", {
-		BackgroundColor3 = Theme.stroke,
-		BackgroundTransparency = 0.4,
-		Position = UDim2.fromOffset(0, px(37)),
-		Size = UDim2.new(1, 0, 0, 1),
+	local close = create("TextButton", {
+		BackgroundColor3 = Theme.card,
+		BackgroundTransparency = 1,
+		Position = UDim2.new(1, -px(30), 0, px(11)),
+		Size = UDim2.fromOffset(px(20), px(22)),
+		AutoButtonColor = false,
+		Font = Enum.Font.GothamBold,
+		Text = "×",
+		TextSize = px(17),
+		TextColor3 = Theme.dim,
+		Active = true,
+	}, header)
+	round(close, px(6))
+	click(close, function()
+		UI.setOpen(false)
+	end)
+	close.MouseEnter:Connect(function()
+		close.TextColor3 = Theme.text
+		close.BackgroundTransparency = 0.75
+	end)
+	close.MouseLeave:Connect(function()
+		close.TextColor3 = Theme.dim
+		close.BackgroundTransparency = 1
+	end)
+
+	local accentLine = create("Frame", {
+		BackgroundColor3 = Theme.accent,
+		BackgroundTransparency = 0.55,
+		Position = UDim2.fromOffset(px(12), px(43)),
+		Size = UDim2.new(1, -px(24), 0, px(1)),
 	}, panel)
 
 	local body = create("Frame", {
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(0, px(38)),
-		Size = UDim2.new(1, 0, 1, -px(38)),
+		Position = UDim2.fromOffset(0, px(45)),
+		Size = UDim2.new(1, 0, 1, -px(45)),
 	}, panel)
 
+	-- rail
 	local rail = create("Frame", {
 		BackgroundColor3 = Theme.deep,
-		BackgroundTransparency = 0.35,
-		Size = UDim2.fromOffset(px(44), 1),
+		BackgroundTransparency = 0.25,
+		Size = UDim2.fromOffset(px(46), 1),
 	}, body)
 	local railList = create("Frame", {
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 1, -px(14)),
-		Position = UDim2.fromOffset(0, px(7)),
+		Size = UDim2.new(1, 0, 1, -px(40)),
+		Position = UDim2.fromOffset(0, px(8)),
 	}, rail)
 	create("UIListLayout", {
-		Padding = UDim.new(0, px(4)),
+		Padding = UDim.new(0, px(3)),
 		HorizontalAlignment = Enum.HorizontalAlignment.Center,
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, railList)
 
-	UI.railButtons = {}
 	local shortcuts = {
 		Aim = "AIM",
 		Combat = "CMB",
@@ -3874,56 +4317,70 @@ local function buildPanel()
 		Skins = "SKN",
 		Utility = "UTL",
 	}
+	UI.railButtons = {}
 	for index, category in ipairs(Categories) do
-		local button = create("TextButton", {
-			BackgroundColor3 = Theme.accent,
-			BackgroundTransparency = 1,
-			Size = UDim2.fromOffset(px(36), px(28)),
-			AutoButtonColor = false,
-			Text = "",
-			LayoutOrder = index,
-		}, railList)
-		round(button, px(7))
-		local text = create("TextLabel", {
-			BackgroundTransparency = 1,
-			Size = UDim2.fromScale(1, 1),
-			Font = Enum.Font.GothamBold,
-			Text = shortcuts[category] or string.sub(category, 1, 3),
-			TextColor3 = Theme.muted,
-			TextSize = px(8),
-		}, button)
-		button.Activated:Connect(function()
-			UI.category = category
-			UI.query = ""
-			if UI.searchBox then
-				UI.searchBox.Text = ""
-			end
-			UI.filter()
-		end)
-		UI.railButtons[#UI.railButtons + 1] = { frame = button, label = text, cat = category }
+		UI.railButtons[#UI.railButtons + 1] = railButton(railList, shortcuts[category] or string.sub(category, 1, 3), category, index)
 	end
 
+	local railClose = create("TextButton", {
+		BackgroundColor3 = Theme.card,
+		BackgroundTransparency = 0.05,
+		Position = UDim2.new(0, px(6), 1, -px(34)),
+		Size = UDim2.fromOffset(px(34), px(26)),
+		AutoButtonColor = false,
+		Font = Enum.Font.GothamBold,
+		Text = "×",
+		TextColor3 = Theme.dim,
+		TextSize = px(13),
+		Active = true,
+	}, rail)
+	round(railClose, px(7))
+	click(railClose, function()
+		UI.setOpen(false)
+	end)
+
+	local railEdge = create("Frame", {
+		BackgroundColor3 = Theme.stroke,
+		BackgroundTransparency = 0.4,
+		Position = UDim2.new(1, -1, 0, 0),
+		Size = UDim2.fromOffset(1, 1),
+	}, rail)
+
+	-- list pane
 	local listPane = create("Frame", {
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(px(44), 0),
-		Size = UDim2.new(0.52, -px(44), 1, 0),
+		Position = UDim2.fromOffset(px(46), 0),
+		Size = UDim2.new(0.53, -px(46), 1, 0),
 	}, body)
 	padding(listPane, 0, px(8), px(8))
 
+	local listHead = create("TextLabel", {
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, 0, 0, px(14)),
+		Font = Enum.Font.GothamBold,
+		Text = "AIM  ·  0",
+		TextColor3 = Theme.muted,
+		TextSize = px(8),
+		TextXAlignment = Enum.TextXAlignment.Left,
+	}, listPane)
+	UI.listHead = listHead
+
 	local search = create("TextBox", {
 		BackgroundColor3 = Theme.card,
-		BackgroundTransparency = 0.15,
-		Size = UDim2.new(1, 0, 0, px(24)),
+		BackgroundTransparency = 0.1,
+		Position = UDim2.fromOffset(0, px(17)),
+		Size = UDim2.new(1, -px(24), 0, px(26)),
 		Font = Enum.Font.Gotham,
-		PlaceholderText = "Search modules...",
+		PlaceholderText = "  search modules",
 		PlaceholderColor3 = Theme.muted,
 		Text = "",
 		TextColor3 = Theme.text,
 		TextSize = px(10),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ClearTextOnFocus = false,
+		Active = true,
 	}, listPane)
-	round(search, px(6))
+	round(search, px(7))
 	padding(search, 0, px(8), 0)
 	UI.searchBox = search
 	search:GetPropertyChangedSignal("Text"):Connect(function()
@@ -3931,39 +4388,133 @@ local function buildPanel()
 		UI.filter()
 	end)
 
+	local clear = create("TextButton", {
+		BackgroundColor3 = Theme.card,
+		BackgroundTransparency = 1,
+		Position = UDim2.new(1, -px(22), px(19)),
+		Size = UDim2.fromOffset(px(20), px(22)),
+		AutoButtonColor = false,
+		Font = Enum.Font.GothamBold,
+		Text = "×",
+		TextColor3 = Theme.muted,
+		TextSize = px(11),
+		Active = true,
+	}, listPane)
+	click(clear, function()
+		search.Text = ""
+		UI.query = ""
+		UI.filter()
+	end)
+
 	local list = create("ScrollingFrame", {
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(0, px(30)),
-		Size = UDim2.new(1, 0, 1, -px(30)),
+		Position = UDim2.fromOffset(0, px(47)),
+		Size = UDim2.new(1, 0, 1, -px(47)),
 		CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		ScrollBarThickness = px(2),
 		ScrollBarImageColor3 = Theme.accent,
 		BorderSizePixel = 0,
+		ScrollingDirection = Enum.ScrollingDirection.Y,
 	}, listPane)
 	create("UIListLayout", {
-		Padding = UDim.new(0, px(2)),
+		Padding = UDim.new(0, px(3)),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, list)
 	UI.list = list
 
 	UI.rows = {}
 	for index, module in ipairs(Order) do
-		UI.rows[module.id] = makeRow(list, module)
-		UI.rows[module.id].frame.LayoutOrder = index
+		local record = makeRow(list, module)
+		record.frame.LayoutOrder = index
+		UI.rows[module.id] = record
 	end
 
+	local empty = create("TextLabel", {
+		BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(0, px(60)),
+		Size = UDim2.new(1, 0, 0, px(30)),
+		Font = Enum.Font.Gotham,
+		Text = "no modules match",
+		TextColor3 = Theme.muted,
+		TextSize = px(10),
+		Visible = false,
+	}, listPane)
+	UI.empty = empty
+
+	-- detail pane
 	local detail = create("Frame", {
 		BackgroundColor3 = Theme.card,
-		BackgroundTransparency = 0.35,
-		Position = UDim2.new(0.52, px(4), 0, 0),
-		Size = UDim2.new(0.48, -px(12), 1, -px(16)),
+		BackgroundTransparency = 0.45,
+		Position = UDim2.new(0.53, px(4), 0, 0),
+		Size = UDim2.new(0.47, -px(14), 1, -px(16)),
 	}, body)
-	round(detail, px(9))
+	round(detail, px(10))
+	edge(detail, Theme.stroke, 1, 0.4)
 	padding(detail, 0, px(10), px(10))
 	UI.detail = detail
 
-	-- Drag the header to move the panel.
+	-- footer
+	local footer = create("Frame", {
+		BackgroundColor3 = Theme.deep,
+		BackgroundTransparency = 0.4,
+		Position = UDim2.new(0, 0, 1, -px(26)),
+		Size = UDim2.new(1, 0, 0, px(26)),
+	}, panel)
+	local footText = create("TextLabel", {
+		BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(px(12), 0),
+		Size = UDim2.new(1, -px(140), 1, 0),
+		Font = Enum.Font.GothamMedium,
+		Text = string.format("%d modules  ·  %d skins", #Order, #SkinCatalog),
+		TextColor3 = Theme.muted,
+		TextSize = px(9),
+		TextXAlignment = Enum.TextXAlignment.Left,
+	}, footer)
+
+	local save = create("TextButton", {
+		BackgroundColor3 = Theme.accent,
+		BackgroundTransparency = 0.82,
+		Position = UDim2.new(1, -px(112), px(5)),
+		Size = UDim2.fromOffset(px(48), px(16)),
+		AutoButtonColor = false,
+		Font = Enum.Font.GothamBold,
+		Text = "SAVE",
+		TextColor3 = Theme.accentSoft,
+		TextSize = px(8),
+		Active = true,
+	}, footer)
+	round(save, px(5))
+	click(save, function()
+		if _G.RClient and _G.RClient.save then
+			pcall(_G.RClient.save)
+		else
+			notify("save unavailable here", Theme.warn)
+		end
+	end)
+
+	local loadBtn = create("TextButton", {
+		BackgroundColor3 = Theme.card,
+		BackgroundTransparency = 0.1,
+		Position = UDim2.new(1, -px(60), px(5)),
+		Size = UDim2.fromOffset(px(48), px(16)),
+		AutoButtonColor = false,
+		Font = Enum.Font.GothamBold,
+		Text = "LOAD",
+		TextColor3 = Theme.dim,
+		TextSize = px(8),
+		Active = true,
+	}, footer)
+	round(loadBtn, px(5))
+	click(loadBtn, function()
+		if _G.RClient and _G.RClient.load then
+			pcall(_G.RClient.load)
+		else
+			notify("load unavailable here", Theme.warn)
+		end
+	end)
+
+	-- drag the header
 	local moving, offset = false, nil
 	header.InputBegan:Connect(function(item)
 		local kind = item.UserInputType
@@ -3973,7 +4524,7 @@ local function buildPanel()
 		end
 	end)
 	UserInputService.InputChanged:Connect(function(item)
-		if not moving then
+		if not moving or not offset then
 			return
 		end
 		local kind = item.UserInputType
@@ -3981,8 +4532,11 @@ local function buildPanel()
 			panel.Position = UDim2.fromOffset(item.Position.X - offset.X, item.Position.Y - offset.Y)
 		end
 	end)
-	UserInputService.InputEnded:Connect(function()
-		moving = false
+	UserInputService.InputEnded:Connect(function(item)
+		local kind = item.UserInputType
+		if kind == Enum.UserInputType.MouseButton1 or kind == Enum.UserInputType.Touch then
+			moving = false
+		end
 	end)
 
 	UI.filter()
@@ -3998,35 +4552,41 @@ local hudGui = {
 	watermarkText = nil,
 	binds = nil,
 	stats = nil,
-	skin = nil,
 	skinLabel = nil,
 	clock = 0,
+	bindSignature = nil,
 }
+
+local FPS = { value = 60 }
+
+local function statsValue()
+	return math.floor(FPS.value + 0.5)
+end
 
 local function buildReadouts()
 	local watermark = create("Frame", {
 		BackgroundColor3 = Theme.card,
-		BackgroundTransparency = 0.15,
+		BackgroundTransparency = 0.12,
 		Position = UDim2.fromOffset(px(12), px(10)),
-		Size = UDim2.fromOffset(px(150), px(24)),
+		Size = UDim2.fromOffset(px(170), px(24)),
 		Visible = false,
 	}, GUI)
-	round(watermark, px(6))
-	edge(watermark, Theme.accent, 1, 0.55)
+	round(watermark, px(7))
+	edge(watermark, Theme.stroke, 1, 0.2)
 	local accent = create("Frame", {
 		BackgroundColor3 = Theme.accent,
 		Size = UDim2.fromOffset(px(2), px(14)),
-		Position = UDim2.fromOffset(px(7), px(5)),
+		Position = UDim2.fromOffset(px(8), px(5)),
 	}, watermark)
 	round(accent, px(1))
 	local wmText = create("TextLabel", {
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(px(14), 0),
-		Size = UDim2.new(1, -px(18), 1, 0),
+		Position = UDim2.fromOffset(px(15), 0),
+		Size = UDim2.new(1, -px(19), 1, 0),
 		Font = Enum.Font.GothamMedium,
-		Text = "R CLIENT",
+		Text = "",
 		TextColor3 = Theme.text,
-		TextSize = px(10),
+		TextSize = px(9),
 		TextXAlignment = Enum.TextXAlignment.Left,
 	}, watermark)
 	hudGui.watermark = watermark
@@ -4034,8 +4594,8 @@ local function buildReadouts()
 
 	local binds = create("Frame", {
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(px(14), px(40)),
-		Size = UDim2.fromOffset(px(200), px(80)),
+		Position = UDim2.fromOffset(px(14), px(42)),
+		Size = UDim2.fromOffset(px(190), px(90)),
 		Visible = false,
 	}, GUI)
 	create("UIListLayout", {
@@ -4046,8 +4606,8 @@ local function buildReadouts()
 
 	local stats = create("TextLabel", {
 		BackgroundTransparency = 1,
-		Position = UDim2.new(0, px(14), 0, px(92)),
-		Size = UDim2.fromOffset(px(220), px(60)),
+		Position = UDim2.new(0, px(14), 0, px(96)),
+		Size = UDim2.fromOffset(px(220), px(64)),
 		Font = Enum.Font.Gotham,
 		Text = "",
 		TextColor3 = Theme.dim,
@@ -4066,14 +4626,12 @@ local function buildReadouts()
 		Font = Enum.Font.GothamBold,
 		Text = "",
 		TextColor3 = Theme.accentSoft,
-		TextSize = px(12),
+		TextSize = px(11),
 		TextTransparency = 0.2,
 		Visible = false,
 	}, GUI)
 	hudGui.skinLabel = skin
 end
-
-local FPS = { value = 60 }
 
 local function updateReadouts(delta)
 	hudGui.clock = hudGui.clock + delta
@@ -4086,23 +4644,22 @@ local function updateReadouts(delta)
 	if hudGui.watermark then
 		hudGui.watermark.Visible = watermark.enabled
 		if watermark.enabled then
-			local fps = statsValue("fps")
-			local ping = math.floor(pingSeconds() * 1000)
 			local parts = { "R CLIENT" }
 			if watermark.fps then
-				parts[#parts + 1] = fps .. " fps"
+				parts[#parts + 1] = statsValue() .. " fps"
 			end
 			if watermark.ping then
-				parts[#parts + 1] = ping .. " ms"
+				parts[#parts + 1] = math.floor(pingSeconds() * 1000) .. " ms"
 			end
 			if watermark.players then
-				parts[#parts + 1] = #Players:GetPlayers() .. " players"
+				parts[#parts + 1] = #Players:GetPlayers() .. " p"
 			end
 			if watermark.clock then
 				parts[#parts + 1] = os.date("%H:%M")
 			end
-			hudGui.watermarkText.Text = table.concat(parts, "   ")
-			hudGui.watermark.Size = UDim2.fromOffset(px(math.max(120, #hudGui.watermarkText.Text * 6)), px(24))
+			local text = table.concat(parts, "   ")
+			hudGui.watermarkText.Text = text
+			hudGui.watermark.Size = UDim2.fromOffset(px(math.max(120, #text * 5.6)), px(24))
 		end
 	end
 
@@ -4125,35 +4682,30 @@ local function updateReadouts(delta)
 				end
 			end
 			local lines = {
-				{ "Aimbot", Config.aimbot.key },
-				{ "Silent", Config.silentaim.key },
-				{ "Rage", Config.ragebot.key },
-				{ "Trigger", Config.triggerbot.key },
-				{ "Fly", Config.fly.key },
-				{ "Noclip", Config.noclip.key },
-				{ "Panic", Config.panic.key },
+				{ "Aimbot", Config.aimbot.key, Config.aimbot.enabled },
+				{ "Silent", Config.silentaim.key, Config.silentaim.enabled },
+				{ "Rage", Config.ragebot.key, Config.ragebot.enabled },
+				{ "Trigger", Config.triggerbot.key, Config.triggerbot.enabled },
+				{ "Fly", Config.fly.key, Config.fly.enabled },
+				{ "Noclip", Config.noclip.key, Config.noclip.enabled },
+				{ "Panic", Config.panic.key, true },
 			}
 			local order = 0
 			for _, line in ipairs(lines) do
-				local enabled = line[1] == "Aimbot" and Config.aimbot.enabled
-					or line[1] == "Silent" and Config.silentaim.enabled
-					or line[1] == "Rage" and Config.ragebot.enabled
-					or line[1] == "Trigger" and Config.triggerbot.enabled
-					or line[1] == "Fly" and Config.fly.enabled
-					or line[1] == "Noclip" and Config.noclip.enabled
-					or false
-				if enabled or not bindModule.onlyEnabled then
+				if line[3] or not bindModule.onlyEnabled then
 					order = order + 1
 					local item = create("TextLabel", {
-						BackgroundTransparency = 1,
-						Size = UDim2.new(1, 0, 0, px(13)),
+						BackgroundColor3 = Theme.card,
+						BackgroundTransparency = 0.55,
+						Size = UDim2.new(1, 0, 0, px(15)),
 						Font = Enum.Font.GothamMedium,
-						Text = string.format("%s  [%s]", line[1], tostring(line[2])),
-						TextColor3 = enabled and Theme.text or Theme.muted,
-						TextSize = px(10),
+						Text = string.format("  %s   [%s]", line[1], tostring(line[2])),
+						TextColor3 = line[3] and Theme.text or Theme.muted,
+						TextSize = px(9),
 						TextXAlignment = Enum.TextXAlignment.Left,
 						LayoutOrder = order,
 					}, binds)
+					round(item, px(4))
 				end
 			end
 		end
@@ -4165,7 +4717,7 @@ local function updateReadouts(delta)
 		if stats.enabled then
 			local parts = {}
 			if stats.fps then
-				parts[#parts + 1] = "fps " .. statsValue("fps")
+				parts[#parts + 1] = "fps " .. statsValue()
 			end
 			if stats.ping then
 				parts[#parts + 1] = "ping " .. math.floor(pingSeconds() * 1000) .. "ms"
@@ -4176,8 +4728,7 @@ local function updateReadouts(delta)
 			if stats.coords then
 				local root = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
 				if root then
-					local position = root.Position
-					parts[#parts + 1] = string.format("%d, %d, %d", math.floor(position.X), math.floor(position.Y), math.floor(position.Z))
+					parts[#parts + 1] = string.format("%d, %d, %d", math.floor(root.Position.X), math.floor(root.Position.Y), math.floor(root.Position.Z))
 				end
 			end
 			hudGui.stats.Text = table.concat(parts, "\n")
@@ -4185,7 +4736,7 @@ local function updateReadouts(delta)
 	end
 
 	if hudGui.skinLabel then
-		local show = (Config.skinpreview.enabled and Config.skinpreview.showName) or (Config.skinchanger.enabled and true)
+		local show = Config.skinpreview.enabled or Config.skinchanger.enabled
 		hudGui.skinLabel.Visible = show
 		if show then
 			hudGui.skinLabel.Text = "SKIN  ·  " .. string.upper(skinName())
@@ -4193,9 +4744,13 @@ local function updateReadouts(delta)
 	end
 end
 
-local function statsValue()
-	return math.floor(FPS.value + 0.5)
+local function refreshRows()
+	for _, row in pairs(UI.rows) do
+		row.refresh()
+	end
 end
+
+
 --------------------------------------------------------------------------
 -- Profiles
 --------------------------------------------------------------------------
@@ -4288,8 +4843,7 @@ onChange(function(id, key, value)
 	end
 	local row = UI.rows[id]
 	if row then
-		row.switch(on(id), true)
-		row.frame.BackgroundTransparency = on(id) and 0.55 or 1
+		row.refresh()
 	end
 	if key == "enabled" and id == "fly" then
 		notify("fly " .. (value and "on" or "off"), value and Theme.good or Theme.dim)
