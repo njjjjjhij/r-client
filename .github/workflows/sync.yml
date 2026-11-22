@@ -1,0 +1,32 @@
+name: sync
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'build/sync.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch client and logo
+        run: |
+          set -e
+          base="https://r-client-files-6br5a3-preview.freebuff.site"
+          curl -fsSL "$base/RClient.lua" -o RClient.lua
+          mkdir -p assets
+          curl -fsSL "$base/r-logo.jpg" -o assets/r-logo.jpg
+          wc -c RClient.lua assets/r-logo.jpg
+          head -n 2 RClient.lua
+      - name: Commit
+        run: |
+          git config user.name "r-client bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add RClient.lua assets/r-logo.jpg
+          git commit -m "Sync RClient.lua and logo" || exit 0
+          git push
