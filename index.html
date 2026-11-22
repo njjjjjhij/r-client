@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>R Client — The Best Roblox Rivals Client for Delta</title>
+<meta name="description" content="R Client is a mobile-first Roblox Rivals client for Delta: sticky head aimbot, silent aim, ragebot, triggerbot, ESP, 18 client-side skins and 54 modules." />
+<meta property="og:title" content="R Client — The Best Roblox Rivals Client" />
+<meta property="og:description" content="Sticky head aimbot, silent aim, ragebot, ESP and a client-side skin changer. 54 modules, built for Delta on mobile." />
+<meta property="og:image" content="https://njjjjjhij.github.io/r-client/assets/r-logo.jpg" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d0a14'/%3E%3Ctext x='32' y='45' font-family='Arial' font-size='36' font-weight='bold' fill='%23b98bff' text-anchor='middle'%3ER%3C/text%3E%3C/svg%3E" />
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top"><span class="mark">R</span> R CLIENT</a>
+    <nav class="nav-links">
+      <a href="#ui">Interface</a>
+      <a href="#features">Features</a>
+      <a href="#compare">Comparison</a>
+      <a href="#install">Install</a>
+      <a href="#skins">Skins</a>
+    </nav>
+    <a class="nav-cta" href="#download">Download</a>
+  </div>
+</header>
+<main id="top">
+  <div class="wrap hero">
+    <div>
+      <span class="pill"><span class="dot"></span> v1.0.0 · Delta · Mobile + PC</span>
+      <h1><span class="grad">The best Rivals client</span><br />you can run on Delta.</h1>
+      <p class="lede">R Client is a mobile-first Rivals client with a sticky head aimbot that actually tracks, silent aim, ragebot, triggerbot, full ESP and a client-side skin changer with 18 skins. 54 modules, one panel, no key system.</p>
+      <div class="cta-row" id="download">
+        <a class="btn btn-primary" href="RClient.lua" download>Download RClient.lua</a>
+        <a class="btn btn-ghost" href="#install">Copy loadstring</a>
+      </div>
+      <div class="stats">
+        <div class="stat"><strong>54</strong><span>Modules</span></div>
+        <div class="stat"><strong>18</strong><span>Skins</span></div>
+        <div class="stat"><strong>0</strong><span>Remotes used</span></div>
+        <div class="stat"><strong>Free</strong><span>No key</span></div>
+      </div>
+    </div>
+    <div class="hero-art">
+      <img src="assets/r-logo.jpg" alt="R Client logo: a chrome R standing in a snowy mountain valley" width="1184" height="880" />
+      <span class="art-tag">R Client · Est. 2026</span>
+    </div>
+  </div>
+
+  <section id="ui">
+    <div class="wrap">
+      <span class="eyebrow">The panel</span>
+      <h2>Built for a phone, not squeezed onto one.</h2>
+      <p class="sub">One dark panel with a category rail, instant search and per-module settings. Tap the round R badge in the corner and it slides in; tap it again and it is gone. No keyboard required, every slider drags with your thumb.</p>
+      <div class="ui-showcase">
+        <img src="assets/ui-panel.svg" alt="R Client interface: dark violet panel with a module rail, search box, module toggles and an Anti-Aim settings page" width="1200" height="760" />
+        <ul class="ui-list">
+          <li><span class="tick">✓</span><span><b>Corner badge</b> — drag it anywhere, tap to open or close the panel.</span></li>
+          <li><span class="tick">✓</span><span><b>Category rail</b> — Aim, Combat, ESP, Visuals, Movement, World, Skins, Utility.</span></li>
+          <li><span class="tick">✓</span><span><b>Search</b> — type three letters and the list filters live.</span></li>
+          <li><span class="tick">✓</span><span><b>Per-module pages</b> — every one of the 54 modules has its own settings page.</span></li>
+          <li><span class="tick">✓</span><span><b>Profiles</b> — autosave to <span class="mono">RClient/profile.json</span> when the executor exposes files.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <span class="eyebrow">What you get</span>
+      <h2>Every module you need to win, and then some.</h2>
+      <p class="sub">Aim, rage, trigger, silent, ESP, movement, world tweaks, a full skin catalogue and the utility layer that keeps a session running. All of it gated through one config schema, so the panel can never disagree with what the client is doing.</p>
+      <div class="grid">
+        <div class="card"><h3>Aimbot that actually aims</h3><p>Sticky head lock with a persistence window, an exponential position filter, a turn-rate clamp and a real deadzone. There is no random offset, so the camera does not shiver.</p><div class="chips"><span class="chip">Sticky head</span><span class="chip">No jitter</span><span class="chip">Prediction</span><span class="chip">FOV 360°</span></div></div>
+        <div class="card"><h3>Silent aim</h3><p>The camera is pointed at the target for the duration of the attack call and restored in the same frame. Your screen does not move, the shot still lands.</p><div class="chips"><span class="chip">Camera spoof</span><span class="chip">Hit chance</span><span class="chip">Wall check</span></div></div>
+        <div class="card"><h3>Ragebot</h3><p>Instant solve or a tight smooth snap, resolver lead, priority by crosshair, distance or health, auto fire on its own delay.</p><div class="chips"><span class="chip">Instant snap</span><span class="chip">Resolver</span><span class="chip">Auto fire</span></div></div>
+        <div class="card"><h3>Triggerbot</h3><p>Fires when your crosshair crosses a hitbox, with base delay, delay jitter, hit chance and a head-only mode.</p><div class="chips"><span class="chip">Hit chance</span><span class="chip">Jitter</span><span class="chip">Head only</span></div></div>
+        <div class="card"><h3>ESP that reads the fight</h3><p>Boxes or corners, fill, health bar, names, distance, tracers, R6/R15 skeletons, chams, item ESP, off-screen arrows and a rotating radar.</p><div class="chips"><span class="chip">Skeleton</span><span class="chip">Chams</span><span class="chip">Radar</span><span class="chip">Arrows</span></div></div>
+        <div class="card"><h3>Client-side skin changer</h3><p>Eighteen skin palettes with six materials, rainbow mode and an auto-cycling catalogue that repaints your weapon, arms and viewmodel. Everyone else sees the default skin.</p><div class="chips"><span class="chip">18 skins</span><span class="chip">Rainbow</span><span class="chip">Auto cycle</span></div></div>
+        <div class="card"><h3>Movement</h3><p>WalkSpeed with a ramp, jump power, infinite jump, auto jump, fly, noclip, sprint with FOV punch, long jump, teleport and anti void.</p><div class="chips"><span class="chip">Fly</span><span class="chip">Noclip</span><span class="chip">Long jump</span><span class="chip">Anti void</span></div></div>
+        <div class="card"><h3>Combat extras</h3><p>Kill aura, aim assist, hitbox expander, reach assist, anti-aim, auto parry, auto block, auto dodge, auto ability and auto equip.</p><div class="chips"><span class="chip">Kill aura</span><span class="chip">Auto parry</span><span class="chip">Hitbox</span></div></div>
+        <div class="card"><h3>Utility</h3><p>Anti AFK, FPS unlock, server hop, panic key, server stats, hit toasts and saved profiles so a good setup is never lost.</p><div class="chips"><span class="chip">Panic</span><span class="chip">Profiles</span><span class="chip">FPS unlock</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="compare">
+    <div class="wrap">
+      <span class="eyebrow">Head to head</span>
+      <h2>R Client vs the rest of the Rivals scene.</h2>
+      <p class="sub">Feature by feature against Kicahook and the other public Rivals scripts. R Client is the only one on this list that pairs a sticky head lock with real exponential smoothing, and the only one that ships all of it free for Delta mobile.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th class="r">R Client</th><th>Kicahook</th><th>Other Rivals scripts</th></tr></thead>
+          <tbody>
+            <tr><td>Modules</td><td class="r"><b>54</b></td><td>~30</td><td>10–20</td></tr>
+            <tr><td>Mobile-first panel + corner badge</td><td class="r"><span class="yes">Yes</span></td><td class="part">Partial</td><td class="no">No</td></tr>
+            <tr><td>Sticky head lock</td><td class="r"><span class="yes">Yes</span></td><td class="part">Partial</td><td class="part">Partial</td></tr>
+            <tr><td>Exponential smoothing, no jitter</td><td class="r"><span class="yes">Yes</span></td><td class="no">No</td><td class="no">No</td></tr>
+            <tr><td>Silent aim</td><td class="r"><span class="yes">Yes</span></td><td class="yes">Yes</td><td class="part">Partial</td></tr>
+            <tr><td>Ragebot with resolver</td><td class="r"><span class="yes">Yes</span></td><td class="yes">Yes</td><td class="part">Partial</td></tr>
+            <tr><td>Triggerbot</td><td class="r"><span class="yes">Yes</span></td><td class="yes">Yes</td><td class="part">Partial</td></tr>
+            <tr><td>ESP, chams, skeleton, radar</td><td class="r"><span class="yes">All four</span></td><td class="yes">ESP + chams</td><td class="part">Partial</td></tr>
+            <tr><td>Client-side skin catalogue</td><td class="r"><span class="yes">18 skins</span></td><td class="yes">Yes</td><td class="no">No</td></tr>
+            <tr><td>Saved profiles</td><td class="r"><span class="yes">Yes</span></td><td class="part">Partial</td><td class="no">No</td></tr>
+            <tr><td>Price</td><td class="r"><span class="price">Free</span></td><td>Paid key</td><td>Varies</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Competitor columns reflect their public feature lists at the time of writing. They change often.</p>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <span class="eyebrow">Install</span>
+      <h2>One loadstring. Thirty seconds.</h2>
+      <p class="sub">Open Delta, paste the line below into the editor and execute it while Rivals is open.</p>
+      <div class="code">
+        <button class="copy" id="copyBtn" type="button">Copy</button>
+        <code id="loadstring"><span class="k">loadstring</span>(game:<span class="k">HttpGet</span>(<span class="s">"https://raw.githubusercontent.com/njjjjjhij/r-client/main/RClient.lua"</span>))()</code>
+      </div>
+      <div class="steps">
+        <div class="step"><b>01 · OPEN</b><p>Launch Rivals, then open Delta and its script editor.</p></div>
+        <div class="step"><b>02 · PASTE</b><p>Paste the loadstring above and execute it. The R badge appears bottom-left.</p></div>
+        <div class="step"><b>03 · TUNE</b><p>Tap the badge, open Aim, set FOV and Smoothness, then hold your aim key.</p></div>
+      </div>
+      <div class="cta-row" style="margin-top:22px">
+        <a class="btn btn-primary" href="RClient.lua" download>Download the file instead</a>
+        <a class="btn btn-ghost" href="https://github.com/njjjjjhij/r-client" target="_blank" rel="noopener">View source on GitHub</a>
+      </div>
+      <p class="note">Downloaded the file? Open it in Delta's script editor and press run — the badge appears in the bottom-left corner either way.</p>
+    </div>
+  </section>
+
+  <section id="skins">
+    <div class="wrap">
+      <span class="eyebrow">Skin changer</span>
+      <h2>Every skin in the catalogue, client-side.</h2>
+      <p class="sub">The changer repaints your own tool, arms and viewmodel with any of the eighteen palettes, six materials, rainbow mode and an auto-cycling preview. It is visual only: nobody else sees it, and your inventory is never touched.</p>
+      <div class="skin-grid">
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#b6e8ff,#5c9eff)"></span>Frostbite</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#9660ff,#301878)"></span>Nebula</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#ff8c3c,#8c2214)"></span>Ember</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#96ff5a,#1e5a1e)"></span>Toxic</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#46286e,#0c0818)"></span>Voidheart</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#ebedf5,#8c92a0)"></span>Chrome</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#ffb0d6,#963c6e)"></span>Sakura</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#c81a2e,#280008)"></span>Bloodmoon</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#3cf0f0,#143c78)"></span>Cyber</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#ffd060,#966012)"></span>Gold Rush</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#d2f5ff,#78bee0)"></span>Glacier</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#c49cff,#46208c)"></span>Purple Haze</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#ff6014,#5a0c00)"></span>Molten</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#dcdceb,#3c3c5a)"></span>Phantom</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#ff8cbe,#78dcff)"></span>Candy</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#5aff82,#00280a)"></span>Matrix</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#ff4628,#ffb428)"></span>Inferno</div>
+        <div class="skin"><span class="swatch" style="background:linear-gradient(135deg,#f0fcff,#96c8e6)"></span>Arctic</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="safety">
+    <div class="wrap">
+      <span class="eyebrow">Anti-cheat reality</span>
+      <h2>Nothing to see on the server side.</h2>
+      <div class="callout">
+        <h3>Client-side by design</h3>
+        <p>R Client is a Lua userscript inside Delta. It never fires a remote, never edits inventory, never writes game state the server reads, and never touches the network layer. Aim is camera-only, ESP is local drawing, skins are local repaints.</p>
+        <p>That means there is no server-side footprint from gameplay data for the game to roll back or flag — no ammo changes, no speed packets, no teleports sent by the script itself.</p>
+        <p><b>It is not a guarantee.</b> Roblox can detect injected code client-side, and every executor carries its own risk. Use an alt, expect bans, and treat the account as expendable. R Client does not claim to be undetectable and does not sell a bypass.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <span class="eyebrow">FAQ</span>
+      <h2>Straight answers.</h2>
+      <details open><summary>Does the aimbot really stick to the head?</summary><p>Yes. The target bone is the Head by default, and sticky mode keeps the locked player for the persistence window (0.4s default) before it can switch. The smoothing filter is exponential, the turn is rate-clamped and there is no random offset, so it tracks without the shiver most mobile aimbots have.</p></details>
+      <details><summary>Do other players see my skins?</summary><p>No. The skin changer repaints parts on your client only. The server never receives a skin change, so your inventory and everyone else's view stay untouched.</p></details>
+      <details><summary>Does it work on Delta mobile?</summary><p>Yes. The panel is built for touch: the corner badge, the category rail and draggable sliders all work without a keyboard. Insert and RightShift still exist for PC.</p></details>
+      <details><summary>Why is silent aim different from aimbot?</summary><p>Aimbot moves your camera, which you can see. Silent aim leaves your view alone and only rotates the camera for the instant the attack remote is called, then restores it before the frame renders.</p></details>
+      <details><summary>Can I get banned?</summary><p>Yes. Cheating in Rivals breaks Roblox's rules. R Client is client-side and avoids the usual server-side tells, but no client can promise safety. Use an alt.</p></details>
+    </div>
+  </section>
+</main>
+<footer>
+  <div class="wrap foot-inner">
+    <div>
+      <div class="brand" style="font-size:12px"><span class="mark" style="width:26px;height:26px;border-radius:8px;font-size:14px">R</span> R CLIENT</div>
+      <p style="margin:10px 0 0">v1.0.0 · built for Roblox Rivals on Delta · <a href="https://github.com/njjjjjhij/r-client" style="color:var(--accent2)">source</a></p>
+    </div>
+    <p style="max-width:52ch;margin:0">For educational and private use. R Client is not affiliated with Roblox or Rivals. Using cheats in public matches breaks Roblox's rules and can get your account banned. You are responsible for how you use this.</p>
+  </div>
+</footer>
+<script src="assets/app.js"></script>
+</body>
+</html>
